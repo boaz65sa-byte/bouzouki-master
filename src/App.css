@@ -1,0 +1,48 @@
+.app {
+  min-height: 100vh;
+  display: flex;
+  flex-direction: column;
+  transition: background-color 0.3s ease;
+}
+
+.app.dark-mode {
+  background-color: var(--bg-dark);
+  color: var(--text-primary);
+}
+
+.app.light-mode {
+  background-color: #f5f5f5;
+  color: #1a1a1a;
+  --bg-panel: #ffffff;
+  --border-color: #ddd;
+  --text-primary: #1a1a1a;
+  --text-secondary: #666;
+}
+
+.main-content {
+  flex: 1;
+  padding: 20px;
+  max-width: 1400px;
+  margin: 0 auto;
+  width: 100%;
+}
+
+.footer {
+  text-align: center;
+  padding: 20px;
+  border-top: 2px solid var(--gold);
+  background: var(--bg-panel);
+  margin-top: 40px;
+}
+
+.footer p {
+  color: var(--text-secondary);
+  font-size: 0.9rem;
+}
+
+/* Responsive */
+@media (max-width: 768px) {
+  .main-content {
+    padding: 10px;
+  }
+}
