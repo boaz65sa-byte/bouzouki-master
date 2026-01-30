@@ -1,40 +1,47 @@
+/* src/components/Fretboard.css */
+
 .fretboard-wrapper {
   overflow-x: auto;
   padding: 20px;
   background: #1a1a1a;
   border-radius: 12px;
   box-shadow: inset 0 0 20px rgba(0,0,0,0.8);
+  margin-bottom: 20px;
 }
 
 .fretboard {
   position: relative;
-  min-width: 900px; /* רוחב מספיק ל-15 סריגים */
+  min-width: 900px; /* רוחב מינימלי כדי שיהיה נוח לראות */
   height: 220px;
   display: flex;
   flex-direction: column;
+  user-select: none; /* מונע סימון טקסט מעצבן בזמן נגינה */
 }
 
-/* שכבת הסריגים (Frets) */
+/* --- שכבה 1: סריגים (Frets) --- */
 .frets-layer {
   position: absolute;
   top: 0; left: 0; right: 0; bottom: 0;
   display: flex;
-  pointer-events: none; /* שלא יפריעו ללחיצות */
+  pointer-events: none; /* כדי שהלחיצות יעברו למיתרים */
+  z-index: 1;
 }
 
 .nut {
   width: 40px;
-  background: #333;
-  border-right: 4px solid #888;
+  background: #2a2a2a;
+  border-right: 6px solid #666; /* ה-Nut עצמו */
   display: flex;
   align-items: center;
   justify-content: center;
-  color: #666;
+  color: #888;
+  font-weight: bold;
 }
 
 .fret-cell {
   flex: 1;
-  border-right: 2px solid #555; /* הקו של הפרט */
+  border-right: 3px solid #888; /* פס המתכת של הפרט */
+  background: linear-gradient(to right, #111, #1a1a1a); /* עץ כהה */
   position: relative;
   display: flex;
   justify-content: center;
@@ -45,90 +52,106 @@
   bottom: -25px;
   font-size: 12px;
   color: #666;
+  font-family: monospace;
 }
 
+/* נקודות סימון על הצוואר */
 .fret-dot {
   position: absolute;
   top: 50%;
-  width: 12px;
-  height: 12px;
-  background: #555;
+  width: 14px;
+  height: 14px;
+  background: #e0e0e0;
   border-radius: 50%;
   transform: translateY(-50%);
-  opacity: 0.5;
+  opacity: 0.8;
+  box-shadow: 0 0 5px rgba(255,255,255,0.2);
 }
 
 .fret-dot.double {
-  height: 25px;
-  border-radius: 10px; /* סימון כפול לאוקטבה 12 */
+  height: 30px;
+  border-radius: 15px; /* אליפסה לאוקטבה 12 */
 }
 
-/* שכבת המיתרים */
+/* --- שכבה 2: מיתרים (Strings) --- */
 .strings-layer {
   position: absolute;
-  top: 0; left: 44px; /* מתחיל אחרי ה-Nut */
+  top: 0; left: 46px; /* קיזוז אחרי ה-Nut */
   right: 0; bottom: 0;
   display: flex;
   flex-direction: column;
   justify-content: space-around;
   padding: 10px 0;
+  z-index: 10;
 }
 
 .string-course {
   position: relative;
-  height: 40px; /* גובה אזור הלחיצה למיתר */
+  height: 40px; /* אזור הלחיצה */
   display: flex;
   flex-direction: column;
   justify-content: center;
-  gap: 3px; /* רווח בין המיתרים הכפולים */
+  gap: 3px; /* המרחק בין זוג המיתרים */
 }
 
 .string-line {
   height: 1px;
-  background: #d4af37; /* צבע זהב */
+  background: #d4af37; /* צבע זהב למיתרים */
   width: 100%;
-  box-shadow: 0 0 2px rgba(212, 175, 55, 0.4);
+  box-shadow: 0 1px 2px rgba(0,0,0,0.5);
+  opacity: 0.9;
 }
 
-/* שכבת התווים - פלקס לאורך המיתר */
+/* --- שכבה 3: תווים (Notes) --- */
 .notes-on-string {
   position: absolute;
-  top: 0; left: -44px; /* קיזוז אחורה ל-Nut */
-  width: calc(100% + 44px);
+  top: 0; left: -46px; /* מחזירים אחורה כדי לכסות גם את ה-0 */
+  width: calc(100% + 46px);
   height: 100%;
   display: flex;
 }
 
-/* Placeholder שקוף ללחיצה */
+/* שטח לחיצה שקוף */
 .note-placeholder {
   flex: 1;
   cursor: pointer;
-}
-.note-placeholder:hover {
-  background: rgba(255, 255, 255, 0.05);
+  transition: background 0.1s;
 }
 
-/* העיגול של התו */
+.note-placeholder:hover {
+  background: rgba(255, 255, 255, 0.03); /* היילייט עדין כשעוברים עם העכבר */
+}
+
+/* העיגול של התו עצמו */
 .note-marker {
   flex: 1;
   display: flex;
   align-items: center;
   justify-content: center;
   cursor: pointer;
-  background: #eebb00; /* זהב */
+  
+  /* עיצוב הכפתור */
+  background: #fbbf24; /* Amber-400 */
   color: #000;
-  font-weight: bold;
-  font-size: 12px;
+  font-weight: 800;
+  font-size: 11px;
   border-radius: 50%;
-  width: 28px;
-  height: 28px;
-  margin: auto; /* ממקם במרכז התא! */
-  z-index: 10;
-  box-shadow: 0 0 10px #eebb00;
+  width: 26px;
+  height: 26px; /* פיקס גודל */
+  margin: auto; /* ממקם בול באמצע */
+  
+  box-shadow: 0 2px 5px rgba(0,0,0,0.5);
+  transition: transform 0.1s;
+  z-index: 20;
+}
+
+.note-marker:active {
+  transform: scale(0.95);
 }
 
 .note-marker.root-note {
-  background: #ff4500; /* אדום */
-  box-shadow: 0 0 15px #ff4500;
+  background: #ef4444; /* Red-500 */
   color: white;
+  box-shadow: 0 0 10px rgba(239, 68, 68, 0.6);
+  z-index: 21; /* תמיד מעל */
 }
