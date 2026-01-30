@@ -1,0 +1,122 @@
+import React, { useState, useEffect, useRef } from 'react';
+import * as Tone from 'tone';
+import { Mic, Play, Pause, Activity } from 'lucide-react'; // וודא שהתקנת את lucide-react
+
+const Tools = () => {
+  const [bpm, setBpm] = useState(120);
+  const [isPlaying, setIsPlaying] = useState(false);
+  const [tunerOn, setTunerOn] = useState(false);
+  const [pitch, setPitch] = useState('--');
+  
+  // -- לוגיקה למטרונום --
+  useEffect(() => {
+    const membrane = new Tone.MembraneSynth().toDestination();
+    const loop = new Tone.Loop((time) => {
+      membrane.triggerAttackRelease("C2", "32n", time);
+    }, "4n");
+
+    Tone.Transport.bpm.value = bpm;
+
+    if (isPlaying) {
+      Tone.start();
+      Tone.Transport.start();
+      loop.start(0);
+    } else {
+      Tone.Transport.stop();
+      loop.stop();
+    }
+    return () => loop.dispose();
+  }, [isPlaying, bpm]);
+
+  // -- לוגיקה לטיונר (פשוטה) --
+  const audioContextRef = useRef(null);
+  const analyserRef = useRef(null);
+  const rafId = useRef(null);
+
+  const startTuner = async () => {
+    try {
+      const stream = await navigator.mediaDevices.getUserMedia({ audio: true });
+      audioContextRef.current = new (window.AudioContext || window.webkitAudioContext)();
+      analyserRef.current = audioContextRef.current.createAnalyser();
+      const source = audioContextRef.current.createMediaStreamSource(stream);
+      source.connect(analyserRef.current);
+      setTunerOn(true);
+      detectPitch();
+    } catch (err) {
+      console.error(err);
+      alert("נדרשת גישה למיקרופון");
+    }
+  };
+
+  const stopTuner = () => {
+    setTunerOn(false);
+    if (rafId.current) cancelAnimationFrame(rafId.current);
+    if (audioContextRef.current) audioContextRef.current.close();
+  };
+
+  const detectPitch = () => {
+    const buffer = new Float32Array(analyserRef.current.fftSize);
+    analyserRef.current.getFloatTimeDomainData(buffer);
+    const correlated = autoCorrelate(buffer, audioContextRef.current.sampleRate);
+    
+    if (correlated !== -1) {
+      const noteStrings = ["C", "C#", "D", "D#", "E", "F", "F#", "G", "G#", "A", "A#", "B"];
+      const noteNum = 12 * (Math.log(correlated / 440) / Math.log(2)) + 69;
+      const note = noteStrings[Math.round(noteNum) % 12];
+      setPitch(`${note} (${Math.round(correlated)}Hz)`);
+    }
+    rafId.current = requestAnimationFrame(detectPitch);
+  };
+
+  // אלגוריתם זיהוי תדר
+  const autoCorrelate = (buf, sampleRate) => {
+    let SIZE = buf.length;
+    let rms = 0;
+    for (let i = 0; i < SIZE; i++) { const val = buf[i]; rms += val * val; }
+    rms = Math.sqrt(rms / SIZE);
+    if (rms < 0.01) return -1;
+
+    let r1 = 0, r2 = SIZE - 1, thres = 0.2;
+    for (let i = 0; i < SIZE / 2; i++) if (Math.abs(buf[i]) < thres) { r1 = i; break; }
+    for (let i = 1; i < SIZE / 2; i++) if (Math.abs(buf[SIZE - i]) < thres) { r2 = SIZE - i; break; }
+    buf = buf.slice(r1, r2);
+    SIZE = buf.length;
+
+    let c = new Array(SIZE).fill(0);
+    for (let i = 0; i < SIZE; i++) for (let j = 0; j < SIZE - i; j++) c[i] = c[i] + buf[j] * buf[j + i];
+    let d = 0; while (c[d] > c[d + 1]) d++;
+    let maxval = -1, maxpos = -1;
+    for (let i = d; i < SIZE; i++) if (c[i] > maxval) { maxval = c[i]; maxpos = i; }
+    let T0 = maxpos;
+    return sampleRate / T0;
+  };
+
+  return (
+    <div className="tools-panel flex gap-4 p-4 bg-gray-800 rounded-lg my-4 text-white">
+      <div className="metronome flex-1 text-center border-r border-gray-600">
+        <h3 className="font-bold mb-2 flex justify-center items-center gap-2"><Activity size={16}/> מטרונום</h3>
+        <div className="flex justify-center items-center gap-4">
+          <button onClick={() => setIsPlaying(!isPlaying)} className="bg-orange-500 p-2 rounded-full">
+            {isPlaying ? <Pause size={20}/> : <Play size={20}/>}
+          </button>
+          <input type="range" min="60" max="200" value={bpm} onChange={(e) => setBpm(e.target.value)} />
+          <span className="font-mono w-8">{bpm}</span>
+        </div>
+      </div>
+
+      <div className="tuner flex-1 text-center">
+        <h3 className="font-bold mb-2 flex justify-center items-center gap-2"><Mic size={16}/> טיונר</h3>
+        {!tunerOn ? (
+          <button onClick={startTuner} className="bg-blue-600 px-4 py-1 rounded">הפעל</button>
+        ) : (
+          <div>
+            <div className="text-2xl font-bold text-green-400">{pitch}</div>
+            <button onClick={stopTuner} className="text-xs text-red-400 mt-2">כבה</button>
+          </div>
+        )}
+      </div>
+    </div>
+  );
+};
+
+export default Tools;
