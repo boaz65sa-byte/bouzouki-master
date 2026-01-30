@@ -1,163 +1,134 @@
-.fretboard-container {
-  background: linear-gradient(135deg, #111 0%, #1a1a1a 100%);
-  border-radius: 15px;
-  padding: 30px 20px;
-  box-shadow: 0 10px 30px rgba(0, 0, 0, 0.5);
-  margin-bottom: 30px;
-  animation: fadeIn 0.5s ease-out;
-}
-
-.fretboard-scroll {
+.fretboard-wrapper {
   overflow-x: auto;
-  overflow-y: hidden;
-  padding-bottom: 10px;
+  padding: 20px;
+  background: #1a1a1a;
+  border-radius: 12px;
+  box-shadow: inset 0 0 20px rgba(0,0,0,0.8);
 }
 
 .fretboard {
-  min-width: 1100px;
   position: relative;
+  min-width: 900px; /* רוחב מספיק ל-15 סריגים */
+  height: 220px;
   display: flex;
-  gap: 10px;
+  flex-direction: column;
 }
 
-.string-labels {
+/* שכבת הסריגים (Frets) */
+.frets-layer {
+  position: absolute;
+  top: 0; left: 0; right: 0; bottom: 0;
+  display: flex;
+  pointer-events: none; /* שלא יפריעו ללחיצות */
+}
+
+.nut {
+  width: 40px;
+  background: #333;
+  border-right: 4px solid #888;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  color: #666;
+}
+
+.fret-cell {
+  flex: 1;
+  border-right: 2px solid #555; /* הקו של הפרט */
+  position: relative;
+  display: flex;
+  justify-content: center;
+}
+
+.fret-number {
+  position: absolute;
+  bottom: -25px;
+  font-size: 12px;
+  color: #666;
+}
+
+.fret-dot {
+  position: absolute;
+  top: 50%;
+  width: 12px;
+  height: 12px;
+  background: #555;
+  border-radius: 50%;
+  transform: translateY(-50%);
+  opacity: 0.5;
+}
+
+.fret-dot.double {
+  height: 25px;
+  border-radius: 10px; /* סימון כפול לאוקטבה 12 */
+}
+
+/* שכבת המיתרים */
+.strings-layer {
+  position: absolute;
+  top: 0; left: 44px; /* מתחיל אחרי ה-Nut */
+  right: 0; bottom: 0;
   display: flex;
   flex-direction: column;
   justify-content: space-around;
-  padding: 20px 0;
-  min-width: 40px;
+  padding: 10px 0;
 }
 
-.string-label {
-  height: 50px;
-  display: flex;
-  align-items: center;
-  justify-content: center;
-  font-size: 1.2rem;
-  font-weight: 700;
-  color: var(--gold);
-  text-shadow: 0 0 10px rgba(212, 175, 55, 0.5);
-}
-
-.fretboard-grid {
-  flex: 1;
+.string-course {
   position: relative;
-  display: grid;
-  grid-template-columns: repeat(16, 1fr);
-  grid-template-rows: repeat(4, 50px);
-  gap: 0;
-  padding: 20px 0;
+  height: 40px; /* גובה אזור הלחיצה למיתר */
+  display: flex;
+  flex-direction: column;
+  justify-content: center;
+  gap: 3px; /* רווח בין המיתרים הכפולים */
 }
 
 .string-line {
-  position: absolute;
+  height: 1px;
+  background: #d4af37; /* צבע זהב */
   width: 100%;
-  height: 2px;
-  background: linear-gradient(90deg, 
-    var(--string-color) 0%, 
-    rgba(224, 224, 224, 0.8) 50%, 
-    var(--string-color) 100%
-  );
-  left: 0;
-  box-shadow: 0 0 5px rgba(224, 224, 224, 0.3);
-  z-index: 1;
+  box-shadow: 0 0 2px rgba(212, 175, 55, 0.4);
 }
 
-.string-line:nth-child(1) { top: 45px; }
-.string-line:nth-child(2) { top: 95px; }
-.string-line:nth-child(3) { top: 145px; }
-.string-line:nth-child(4) { top: 195px; }
-
-.fret-column {
-  position: relative;
-  grid-row: 1 / -1;
-}
-
-.fret-line {
+/* שכבת התווים - פלקס לאורך המיתר */
+.notes-on-string {
   position: absolute;
-  right: 0;
-  top: 0;
-  bottom: 0;
-  width: 3px;
-  background: linear-gradient(180deg, 
-    transparent 0%, 
-    var(--fret-color) 20%, 
-    var(--fret-color) 80%, 
-    transparent 100%
-  );
-  z-index: 2;
-}
-
-.fret-marker {
-  position: absolute;
-  bottom: -25px;
-  left: 50%;
-  transform: translateX(-50%);
-  font-size: 0.75rem;
-  color: var(--text-secondary);
-  font-weight: 500;
-}
-
-.note-position {
-  position: relative;
+  top: 0; left: -44px; /* קיזוז אחורה ל-Nut */
+  width: calc(100% + 44px);
+  height: 100%;
   display: flex;
-  align-items: center;
-  justify-content: center;
-  z-index: 5;
 }
 
-.note-marker {
-  width: 32px;
-  height: 32px;
-  border-radius: 50%;
-  background: var(--gold);
-  color: #000;
-  font-size: 0.75rem;
-  font-weight: 700;
-  display: flex;
-  align-items: center;
-  justify-content: center;
-  box-shadow: 0 0 15px rgba(212, 175, 55, 0.6);
-  transition: all 0.3s ease;
-  animation: fadeIn 0.3s ease-out;
+/* Placeholder שקוף ללחיצה */
+.note-placeholder {
+  flex: 1;
   cursor: pointer;
 }
-
-.note-marker:hover {
-  transform: scale(1.2);
-  box-shadow: 0 0 20px rgba(212, 175, 55, 0.9);
+.note-placeholder:hover {
+  background: rgba(255, 255, 255, 0.05);
 }
 
-.note-position.root .note-marker {
-  background: var(--highlight);
-  color: #fff;
-  box-shadow: 0 0 20px rgba(255, 69, 0, 0.8);
-  animation: pulse 2s ease-in-out infinite;
+/* העיגול של התו */
+.note-marker {
+  flex: 1;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  cursor: pointer;
+  background: #eebb00; /* זהב */
+  color: #000;
+  font-weight: bold;
+  font-size: 12px;
+  border-radius: 50%;
+  width: 28px;
+  height: 28px;
+  margin: auto; /* ממקם במרכז התא! */
+  z-index: 10;
+  box-shadow: 0 0 10px #eebb00;
 }
 
-/* Responsive */
-@media (max-width: 768px) {
-  .fretboard-container {
-    padding: 15px 10px;
-  }
-
-  .string-label {
-    height: 40px;
-    font-size: 1rem;
-  }
-
-  .fretboard-grid {
-    grid-template-rows: repeat(4, 40px);
-  }
-
-  .string-line:nth-child(1) { top: 35px; }
-  .string-line:nth-child(2) { top: 75px; }
-  .string-line:nth-child(3) { top: 115px; }
-  .string-line:nth-child(4) { top: 155px; }
-
-  .note-marker {
-    width: 26px;
-    height: 26px;
-    font-size: 0.65rem;
-  }
+.note-marker.root-note {
+  background: #ff4500; /* אדום */
+  box-shadow: 0 0 15px #ff4500;
+  color: white;
 }
