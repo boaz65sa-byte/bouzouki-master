@@ -1,99 +1,118 @@
-import React from 'react'
-import { STRINGS, FRET_COUNT, getNoteName } from '../data/musicData'
-import './Fretboard.css'
+import React, { useEffect, useState } from 'react';
+import * as Tone from 'tone';
+import { STRING_TUNING, getNoteFreq, getNoteName, NOTES } from '../data/musicData';
+import './Fretboard.css';
 
 const Fretboard = ({ displayType, activeMode, activeChord, modeData, chordData }) => {
-  const NOTES = ['C', 'C#', 'D', 'Eb', 'E', 'F', 'F#', 'G', 'G#', 'A', 'Bb', 'B']
-  
-  // בדיקה האם תו שייך למוד
-  const isNoteInMode = (stringIndex, fret) => {
-    if (!modeData) return false
-    
-    const noteName = getNoteName(stringIndex, fret)
-    const notePos = NOTES.indexOf(noteName)
-    const rootPos = NOTES.indexOf('D') // טוניקה ב-D
-    const interval = (notePos - rootPos + 12) % 12
-    
-    return modeData.includes(interval)
-  }
+  const [synth, setSynth] = useState(null);
 
-  // בדיקה האם תו הוא טוניקה
-  const isRoot = (stringIndex, fret) => {
-    if (!modeData) return false
-    const noteName = getNoteName(stringIndex, fret)
-    return noteName === 'D'
-  }
+  useEffect(() => {
+    const polySynth = new Tone.PolySynth(Tone.Synth, {
+      oscillator: { type: "triangle" },
+      envelope: { attack: 0.02, decay: 0.1, sustain: 0.3, release: 1 }
+    }).toDestination();
+    polySynth.volume.value = -6;
+    setSynth(polySynth);
+  }, []);
 
-  // בדיקה האם תו שייך לאקורד
-  const isNoteInChord = (stringIndex, fret) => {
-    if (!chordData) return false
-    return chordData[stringIndex] === fret
-  }
+  const playNote = (freq) => {
+    if (synth) {
+      synth.triggerAttackRelease(freq, "8n");
+      synth.triggerAttackRelease(freq + 1.5, "8n", "+0.02"); 
+    }
+  };
 
   return (
     <div className="fretboard-container">
       <div className="fretboard-scroll">
-        <div className="fretboard">
-          {/* String labels */}
-          <div className="string-labels">
-            {STRINGS.map((string, idx) => (
-              <div key={idx} className="string-label">
-                {string}
-              </div>
-            ))}
-          </div>
+        {/* שורת המספרים (Frets Header) */}
+        <div className="fret-numbers-row">
+          <div className="fret-number-cell nut-header">0</div>
+          {[...Array(15)].map((_, i) => (
+            <div key={i} className="fret-number-cell">{i + 1}</div>
+          ))}
+        </div>
 
-          {/* Fretboard grid */}
-          <div className="fretboard-grid">
-            {/* Strings */}
-            {STRINGS.map((_, stringIdx) => (
-              <div key={`string-${stringIdx}`} className="string-line" />
-            ))}
+        {/* שורות המיתרים */}
+        <div className="strings-container">
+          {STRING_TUNING.map((stringInfo, stringIdx) => (
+            <div key={stringIdx} className="string-row">
+              
+              {/* מיתר פתוח (0) */}
+              <NoteCell 
+                fret={0}
+                stringIdx={stringIdx}
+                baseFreq={stringInfo.baseFreq}
+                playNote={playNote}
+                displayType={displayType}
+                modeData={modeData}
+                chordData={chordData}
+                isOpenString={true}
+              />
 
-            {/* Frets and notes */}
-            {Array.from({ length: FRET_COUNT + 1 }).map((_, fretIdx) => (
-              <div key={`fret-${fretIdx}`} className="fret-column">
-                {fretIdx > 0 && <div className="fret-line" />}
-                
-                {/* Fret number marker */}
-                {fretIdx > 0 && (fretIdx === 3 || fretIdx === 5 || fretIdx === 7 || fretIdx === 9 || fretIdx === 12) && (
-                  <div className="fret-marker">{fretIdx}</div>
-                )}
-
-                {/* Notes on each string */}
-                {STRINGS.map((_, stringIdx) => {
-                  const showNote = displayType === 'mode' 
-                    ? isNoteInMode(stringIdx, fretIdx)
-                    : displayType === 'chord'
-                    ? isNoteInChord(stringIdx, fretIdx)
-                    : false
-
-                  const isRootNote = displayType === 'mode' && isRoot(stringIdx, fretIdx)
-                  
-                  return (
-                    <div
-                      key={`note-${stringIdx}-${fretIdx}`}
-                      className={`note-position ${showNote ? 'active' : ''} ${isRootNote ? 'root' : ''}`}
-                      style={{ 
-                        gridRow: stringIdx + 1,
-                        gridColumn: fretIdx + 1 
-                      }}
-                    >
-                      {showNote && (
-                        <div className="note-marker">
-                          {getNoteName(stringIdx, fretIdx)}
-                        </div>
-                      )}
-                    </div>
-                  )
-                })}
-              </div>
-            ))}
-          </div>
+              {/* סריגים 1-15 */}
+              {[...Array(15)].map((_, fretIdx) => (
+                <NoteCell 
+                  key={fretIdx}
+                  fret={fretIdx + 1}
+                  stringIdx={stringIdx}
+                  baseFreq={stringInfo.baseFreq}
+                  playNote={playNote}
+                  displayType={displayType}
+                  modeData={modeData}
+                  chordData={chordData}
+                  isOpenString={false}
+                />
+              ))}
+            </div>
+          ))}
         </div>
       </div>
     </div>
-  )
-}
+  );
+};
 
-export default Fretboard
+const NoteCell = ({ fret, stringIdx, baseFreq, playNote, displayType, modeData, chordData, isOpenString }) => {
+  const noteName = getNoteName(stringIdx, fret);
+  const freq = getNoteFreq(baseFreq, fret);
+
+  let isActive = false;
+  let isRoot = false;
+
+  if (displayType === 'mode' && modeData) {
+    const rootIndex = NOTES.indexOf('D');
+    const noteIndex = NOTES.indexOf(noteName);
+    const interval = (noteIndex - rootIndex + 12) % 12;
+    isActive = modeData.includes(interval);
+    isRoot = (interval === 0);
+  } else if (displayType === 'chord' && chordData) {
+    isActive = chordData[stringIdx] === fret;
+  }
+
+  // בדיקת נקודות סימון (Dots)
+  const isDot = [3, 5, 7, 10].includes(fret);
+  const isDoubleDot = fret === 12;
+
+  return (
+    <div className={`fret-cell ${isOpenString ? 'open-string' : ''}`} onClick={() => playNote(freq)}>
+      {/* קו המיתר (ויזואלי בלבד) */}
+      <div className="string-line-container">
+        <div className="string-line"></div>
+        <div className="string-line"></div>
+      </div>
+
+      {/* נקודת סימון על הצוואר (רקע) */}
+      {!isOpenString && isDot && <div className="fret-dot"></div>}
+      {!isOpenString && isDoubleDot && <div className="fret-dot double"></div>}
+
+      {/* התו עצמו */}
+      {isActive && (
+        <div className={`note-marker ${isRoot ? 'root' : ''}`}>
+          {noteName}
+        </div>
+      )}
+    </div>
+  );
+};
+
+export default Fretboard;
