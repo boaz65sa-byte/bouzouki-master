@@ -1,157 +1,134 @@
-/* src/components/Fretboard.css */
-
-.fretboard-wrapper {
-  overflow-x: auto;
-  padding: 20px;
+/* מיכל ראשי עם גלילה */
+.fretboard-container {
+  width: 100%;
+  overflow-x: auto; /* מאפשר גלילה אם המסך צר */
   background: #1a1a1a;
+  padding: 20px;
   border-radius: 12px;
   box-shadow: inset 0 0 20px rgba(0,0,0,0.8);
   margin-bottom: 20px;
 }
 
-.fretboard {
-  position: relative;
-  min-width: 900px; /* רוחב מינימלי כדי שיהיה נוח לראות */
-  height: 220px;
+/* האזור שנגלל */
+.fretboard-scroll {
   display: flex;
   flex-direction: column;
-  user-select: none; /* מונע סימון טקסט מעצבן בזמן נגינה */
+  min-width: 900px; /* רוחב מינימלי - מונע קריסה! */
+  padding-bottom: 10px;
 }
 
-/* --- שכבה 1: סריגים (Frets) --- */
-.frets-layer {
-  position: absolute;
-  top: 0; left: 0; right: 0; bottom: 0;
+/* --- שורת המספרים למעלה --- */
+.fret-numbers-row {
   display: flex;
-  pointer-events: none; /* כדי שהלחיצות יעברו למיתרים */
-  z-index: 1;
+  margin-bottom: 5px;
+  padding-left: 0; 
 }
 
-.nut {
-  width: 40px;
-  background: #2a2a2a;
-  border-right: 6px solid #666; /* ה-Nut עצמו */
-  display: flex;
-  align-items: center;
-  justify-content: center;
-  color: #888;
-  font-weight: bold;
-}
-
-.fret-cell {
-  flex: 1;
-  border-right: 3px solid #888; /* פס המתכת של הפרט */
-  background: linear-gradient(to right, #111, #1a1a1a); /* עץ כהה */
-  position: relative;
-  display: flex;
-  justify-content: center;
-}
-
-.fret-number {
-  position: absolute;
-  bottom: -25px;
-  font-size: 12px;
+.fret-number-cell {
+  flex: 1; /* לוקח רוחב שווה */
+  text-align: center;
   color: #666;
+  font-size: 12px;
   font-family: monospace;
 }
 
-/* נקודות סימון על הצוואר */
-.fret-dot {
-  position: absolute;
-  top: 50%;
-  width: 14px;
-  height: 14px;
-  background: #e0e0e0;
-  border-radius: 50%;
-  transform: translateY(-50%);
-  opacity: 0.8;
-  box-shadow: 0 0 5px rgba(255,255,255,0.2);
+.nut-header {
+  flex: 0 0 50px; /* רוחב קבוע ל-Nut */
 }
 
-.fret-dot.double {
-  height: 30px;
-  border-radius: 15px; /* אליפסה לאוקטבה 12 */
-}
-
-/* --- שכבה 2: מיתרים (Strings) --- */
-.strings-layer {
-  position: absolute;
-  top: 0; left: 46px; /* קיזוז אחרי ה-Nut */
-  right: 0; bottom: 0;
+/* --- אזור המיתרים --- */
+.strings-container {
   display: flex;
   flex-direction: column;
-  justify-content: space-around;
-  padding: 10px 0;
-  z-index: 10;
+  border: 1px solid #444; /* מסגרת לכל הצוואר */
+  background: #111; /* צבע העץ הכהה */
 }
 
-.string-course {
+.string-row {
+  display: flex;
+  height: 45px; /* גובה כל מיתר */
   position: relative;
-  height: 40px; /* אזור הלחיצה */
+}
+
+/* --- התא הבודד (מפגש מיתר/סריג) --- */
+.fret-cell {
+  flex: 1; /* רוחב שווה לכל סריג */
+  border-right: 2px solid #555; /* פס המתכת של הפרט */
+  position: relative;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  cursor: pointer;
+}
+
+.fret-cell.open-string {
+  flex: 0 0 50px; /* רוחב קבוע למיתר פתוח */
+  background: #222; /* צבע קצת שונה ל-Nut */
+  border-right: 4px solid #888; /* ה-Nut עצמו */
+}
+
+.fret-cell:hover {
+  background: rgba(255,255,255,0.05);
+}
+
+/* --- המיתרים עצמם --- */
+.string-line-container {
+  position: absolute;
+  width: 100%;
   display: flex;
   flex-direction: column;
-  justify-content: center;
-  gap: 3px; /* המרחק בין זוג המיתרים */
+  gap: 3px; /* מרווח בין מיתר כפול */
+  pointer-events: none; /* כדי לא להפריע ללחיצה */
+  opacity: 0.8;
 }
 
 .string-line {
   height: 1px;
-  background: #d4af37; /* צבע זהב למיתרים */
+  background: #d4af37; /* זהב */
   width: 100%;
-  box-shadow: 0 1px 2px rgba(0,0,0,0.5);
-  opacity: 0.9;
+  box-shadow: 0 0 2px rgba(212, 175, 55, 0.5);
 }
 
-/* --- שכבה 3: תווים (Notes) --- */
-.notes-on-string {
+/* --- נקודות סימון (Dots) --- */
+.fret-dot {
   position: absolute;
-  top: 0; left: -46px; /* מחזירים אחורה כדי לכסות גם את ה-0 */
-  width: calc(100% + 46px);
-  height: 100%;
-  display: flex;
+  width: 12px;
+  height: 12px;
+  background: #555;
+  border-radius: 50%;
+  z-index: 1;
 }
 
-/* שטח לחיצה שקוף */
-.note-placeholder {
-  flex: 1;
-  cursor: pointer;
-  transition: background 0.1s;
+.fret-dot.double {
+  width: 24px;
+  border-radius: 12px;
 }
 
-.note-placeholder:hover {
-  background: rgba(255, 255, 255, 0.03); /* היילייט עדין כשעוברים עם העכבר */
-}
-
-/* העיגול של התו עצמו */
+/* --- עיגול התו (הכפתור הצהוב) --- */
 .note-marker {
-  flex: 1;
+  width: 28px;
+  height: 28px;
+  background: #fbbf24; /* Amber */
+  border-radius: 50%;
   display: flex;
   align-items: center;
   justify-content: center;
-  cursor: pointer;
-  
-  /* עיצוב הכפתור */
-  background: #fbbf24; /* Amber-400 */
-  color: #000;
-  font-weight: 800;
-  font-size: 11px;
-  border-radius: 50%;
-  width: 26px;
-  height: 26px; /* פיקס גודל */
-  margin: auto; /* ממקם בול באמצע */
-  
-  box-shadow: 0 2px 5px rgba(0,0,0,0.5);
-  transition: transform 0.1s;
-  z-index: 20;
+  font-weight: bold;
+  font-size: 12px;
+  color: black;
+  z-index: 10; /* מעל המיתר ומעל הנקודה */
+  box-shadow: 0 2px 4px rgba(0,0,0,0.5);
+  animation: popIn 0.2s cubic-bezier(0.175, 0.885, 0.32, 1.275);
 }
 
-.note-marker:active {
-  transform: scale(0.95);
-}
-
-.note-marker.root-note {
-  background: #ef4444; /* Red-500 */
+.note-marker.root {
+  background: #ef4444; /* Red */
   color: white;
   box-shadow: 0 0 10px rgba(239, 68, 68, 0.6);
-  z-index: 21; /* תמיד מעל */
+  z-index: 11;
+}
+
+@keyframes popIn {
+  from { transform: scale(0); }
+  to { transform: scale(1); }
 }
